@@ -1,0 +1,3 @@
+- 언두 로그의 크기와 언두 테이블스페이스 개수의 비율은 어떻게 설정되어야 이상적일까?
+- Undo Purge와 Undo Tablespace Truncate의 상관관계
+- Undo Purge가 주기적으로 발생한다고 했는데, 정확한 시점은 언제인가?
