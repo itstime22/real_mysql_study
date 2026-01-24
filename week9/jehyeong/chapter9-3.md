@@ -27,10 +27,10 @@ FROM 절에 명시된 모든 테이블의 조합에 대해 실행 계획의 비�
 
 ## 9.3.2.2 Greedy 검색 알고리즘
 
-> `optimizer_search_depth`가  1~62면 Greedy 검색 대상을 지정 개수로 한정해 실행 계획을 산출한다.
-`optimizer_search_depth`가 0이면 옵티마이저가 자동으로 최적 조인 테이블 개수를 정한다.
-`optimizer_search_depth`가 0이면 성능에 영향을 미칠 수 있으니 4~5 정도로 설정하자.
->
+- `optimizer_search_depth`가  1~62면 Greedy 검색 대상을 지정 개수로 한정해 실행 계획을 산출한다.
+- `optimizer_search_depth`가 0이면 옵티마이저가 자동으로 최적 조인 테이블 개수를 정한다.
+- `optimizer_search_depth`가 0이면 성능에 영향을 미칠 수 있으니 4~5 정도로 설정하자.
+
 1. 전체 N개 테이블중에서 `optimizer_search_depth` 시스템 설정 변수에 정의된 개수의 테이블로 가능한 조인 조합 생성
 2. 1번에서 생성된 조인 조합 중에서 최소 비용의 실행 계획 하나를 선정
 3. 2번에서 선정된 실행 계획의 첫 번째 테이블을 “부분 실행 계획”의 첫 번째 테이블로 선정
