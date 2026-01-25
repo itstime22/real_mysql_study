@@ -41,8 +41,6 @@ MySQL 5.0과 그 이전에서 사용되던 방식입니다.
 
 MySQL 5.0 이후 조인 최적화에서 현실적인 탐색을 위해 사용되는 접근 방식입니다.
 
-> 💡 **핵심**: 완전 탐색이 아니라 **"좋아 보이는 선택"을 단계적으로 확장**
-
 ### optimizer_search_depth
 
 이 파라미터는 탐색 깊이를 제어합니다.
@@ -63,8 +61,6 @@ SHOW VARIABLES LIKE 'optimizer_search_depth';
 ```sql
 SET optimizer_search_depth = 4;  -- 4개 테이블까지만 탐색
 ```
-
-> ⚠️ **주의**: 0(자동)은 상황에 따라 탐색 비용이 커질 수 있어서, 운영 환경에서는 적정 수준으로 제한하는 선택을 하기도 합니다.
 
 ### Greedy 알고리즘 절차
 
@@ -111,7 +107,7 @@ SHOW VARIABLES LIKE 'optimizer_prune_level';
 
 MySQL 옵티마이저는 통계/규칙 기반으로 실행 계획을 세우지만, 서비스 특성이나 데이터 분포를 100% 정확히 이해하지 못할 수 있습니다.
 
-그래서 개발자가 옵티마이저에게 **"이렇게 실행 계획을 잡아줘"**라고 방향을 제시할 수 있는 수단이 필요하며, 그 수단이 **힌트(Hint)**입니다.
+그래서 개발자가 옵티마이저에게 "이렇게 실행 계획을 잡아줘"라고 방향을 제시할 수 있는 수단이 필요하며, 그 수단이 힌트(Hint)입니다.
 
 ### 힌트의 종류
 
@@ -187,11 +183,9 @@ WHERE firstname = 'Matt';
 - `USE INDEX FOR ORDER BY`: 정렬에만 사용
 - `USE INDEX FOR GROUP BY`: 그룹화에만 사용
 
-> 💡 **참고**: MySQL에서는 단일 테이블 조회도 내부적으로 "조인 처리" 관점이 섞여 표현되는 경우가 있어 `FOR JOIN`이라는 용어가 등장합니다.
-
 ### 9.4.1.3 SQL_CALC_FOUND_ROWS
 
-LIMIT이 있는 쿼리는 원하는 건수만 찾으면 보통 탐색을 중단합니다. 하지만 `SQL_CALC_FOUND_ROWS`를 쓰면 LIMIT을 만족해도 끝까지 탐색하여 **"LIMIT이 없었다면 총 몇 건인지"**를 알아낼 수 있습니다.
+LIMIT이 있는 쿼리는 원하는 건수만 찾으면 보통 탐색을 중단합니다. 하지만 `SQL_CALC_FOUND_ROWS`를 쓰면 LIMIT을 만족해도 끝까지 탐색하여 "LIMIT이 없었다면 총 몇 건인지"를 알아낼 수 있습니다.
 
 ```sql
 SELECT SQL_CALC_FOUND_ROWS *
@@ -201,8 +195,6 @@ LIMIT 10;
 
 SELECT FOUND_ROWS();  -- LIMIT 없이 조회했을 때의 총 건수
 ```
-
-> ⚠️ 이 힌트는 성능에 영향을 줄 수 있어(끝까지 탐색) 무분별한 사용은 주의가 필요합니다.
 
 ---
 
@@ -221,7 +213,7 @@ SELECT FOUND_ROWS();  -- LIMIT 없이 조회했을 때의 총 건수
 
 ```sql
 EXPLAIN
-SELECT /*+ INDEX(employees ix_firstname) */ *
+SELECT /*+ INDEX(employees ix_firstname) */
 FROM employees
 WHERE firstname = 'Matt';
 ```
@@ -266,8 +258,6 @@ FROM large_table
 ORDER BY col1, col2, col3;
 ```
 
-> 💡 **팁**: 조인 버퍼/정렬 버퍼 같은 값도 "일시적으로" 조정해서 특정 대용량 쿼리에만 적용하는 용도로 사용할 수 있습니다.
-
 ### 9.4.2.4 SEMIJOIN / NO_SEMIJOIN
 
 세미조인 최적화(서브쿼리 IN/EXISTS 변환 등)의 세부 전략을 제어합니다.
@@ -309,8 +299,6 @@ WHERE e.emp_no NOT IN (
 );
 ```
 
-> ⚠️ **참고**: 원문에 `SEMIJOIN(MATERIALIZATION)`로 섞여 있었는데, 보통은 `SUBQUERY` 힌트 표기와 분리해서 보는 게 이해가 깔끔합니다.
-
 ### 9.4.2.6 BNL / NO_BNL / HASHJOIN / NO_HASHJOIN
 
 **버전별 차이점:**
@@ -330,8 +318,6 @@ SELECT /*+ NO_BNL(t1, t2) */ *
 FROM table1 t1
 INNER JOIN table2 t2 ON t1.id = t2.id;
 ```
-
-> ⚠️ **중요**: 버전에 따라 힌트 의미가 달라질 수 있으니, **운영 버전 기준으로 확인이 필요**합니다.
 
 ### 9.4.2.7 JOIN_FIXED_ORDER / JOIN_ORDER / JOIN_PREFIX / JOIN_SUFFIX
 
@@ -378,8 +364,6 @@ WHERE dt.cnt > 1;
 ### 9.4.2.9 INDEX_MERGE / NO_INDEX_MERGE
 
 MySQL은 가능하면 테이블당 인덱스 1개로 처리하려 하지만, 경우에 따라 여러 인덱스를 조합(합집합/교집합)해서 범위를 줄이는 **Index Merge**를 사용합니다.
-
-> ⚠️ **주의**: 항상 좋은 건 아니므로 힌트로 제어 가능합니다.
 
 ```sql
 -- Index Merge 활성화
