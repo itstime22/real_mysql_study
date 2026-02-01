@@ -103,7 +103,7 @@ SELECT
 - 다른 SELECT에 의해 감싸지지 않은 SELECT
 - 어떤 SELECT의 괄호 안에도 들어 있지 않은 최상위 SELECT
 >
-1. **UNION**
+3. **UNION**
     - UNION으로 결합하는 단위 SELECT 쿼리 가운데 첫 번째를 제외한 두 번째 이후 단위 SELECT 쿼리
     - UNION의 첫 번째 단위 SELECT는 select_type이 **UNION**이 아닌 **임시 테이블(DERIVED)**로 표시
 
@@ -117,7 +117,7 @@ SELECT
 
     - 위 쿼리의 실행 계획에서 e1은 **DERIVED**로, e2&e3는 **UNION** 으로 select_type이 표기된다.
     - 세 개의 서브쿼리로 조회도니 결과르 UNION ALL로 결합해 임시 테이블을 만들어서 사용하기 때문
-2. **DEPENDENT UNION**
+4. **DEPENDENT UNION**
     - UNION 타입 처럼 `UNION`이나 `UNION ALL`로 집합을 결합하는 쿼리에서 표시된다.
     - **DEPENDENT**는 `UNION`이나 `UNION ALL`로 결합된 단위 쿼리가 외부 쿼리에 의해 영향을 받는 것을 의미한다.
 
@@ -135,20 +135,20 @@ SELECT
     - 외부의 employees 테이블을 먼저 읽은 후 서브쿼리를 실행하는데, 이때 employees 테이블의 칼럼 값이 서브쿼리에 영향을 준다.
     - 이렇게 내부 쿼리가 외부의 값을 참조해서 처리될 때 select_type에 DEPENDENT 키워드가 표시
 
-   | id | select_type | table | type | key | ref | rows | Extra |
-       | --- | --- | --- | --- | --- | --- | --- | --- |
-   | 1 | PRIMARY | e1 | ALL | NULL | NULL | 300252 | Using where |
-   | 3 | DEPENDENT SUBQUERY | e2 | eq_ref | PRIMARY | func | 1 | Using where |
-   | 2 | DEPENDENT UNION | e3 | eq_ref | PRIMARY | func | 1 | Using where |
-   | NULL | UNION RESULT | <union2,3> | ALL | NULL | NULL | NULL | Using temporary |
-3. **UNION RESULT**
+| id | select_type | table | type | key | ref | rows | Extra |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 | PRIMARY | e1 | ALL | NULL | NULL | 300252 | Using where |
+| 3 | DEPENDENT SUBQUERY | e2 | eq_ref | PRIMARY | func | 1 | Using where |
+| 2 | DEPENDENT UNION | e3 | eq_ref | PRIMARY | func | 1 | Using where |
+| NULL | UNION RESULT | <union2,3> | ALL | NULL | NULL | NULL | Using temporary |
+5. **UNION RESULT**
     - **UNION 결과를 담아두는 테이블을 의미**한다.
     - MySQL 8.0 부터 UNION ALL이 임시 테이블을 사용하지 않도록 기능이 개선됐다.
         - UNION, UNION DISTINCT는 여전히 임시 테이블에 결과를 버퍼링한다.
         - 즉 UNION ALL 사용 쿼리에서는 UNION RESULT 라인이 없어진다.
     - 실행 계획상에서 이 임시 테이블을 가리키는 라인의 select_type이 UNION RESULT이다.
         - 실제 쿼리에서 단위 쿼리가 아니기 때문에 별도의 id 값은 부여되지 않는다.
-4. **SUBQUERY**
+6. **SUBQUERY**
     - 일반적으로 서브쿼리는 여러 가지를 통틀어서 이야기할 때가 많아 헷갈릴 수 있다.
     - **select_type의 SUBQUERY는 FROM 절 이외에서 사용되는 서브쿼리만을 의미한다.**
 
@@ -167,7 +167,7 @@ SELECT
 - 로우 서브쿼리(Low Subquery): 칼럼의 개수와 관계없이 하나의 레코드만 반환하는 쿼리
 </aside>
 
-1. **DEPENDENT SUBQUERY**
+7. **DEPENDENT SUBQUERY**
     - 서브쿼리가 바깥쪽(Outer) SELECT 쿼리에서 정의된 칼럼을 사용하는 경우 표시되는 select_type
 
     ```sql
@@ -182,14 +182,14 @@ SELECT
 
     - 위와 같은 쿼리에서 안쪽의 서브쿼리 결과가 바깥쪽 SELECT 쿼리의 칼럼에 의존적이다.
     - 이 경우 DEPENDENT 키워드가 붙으며, DEPENDENT UNION 처럼 외부 쿼리가 먼저 수행된 후 내부 쿼리(서브쿼리)가 실행돼야 하므로 DEPENDENT 키워드가 없는 일반 서브쿼리보다 처리가 느리다.
-2. **DERIVED**
+8. **DERIVED**
     - **DERIVED는 단위 SELECT 쿼리의 실행 결과로 메모리나 디스크에 임시 테이블을 생성하는 것을 의미**
         - MySQL 5.5 버전까지는 서브쿼리가 FROM 절에 사용된 경우 항상 select_type이 DERIVED인 실행 계획을 만들었다.
         - 5.6 버전 부터는 옵티마이저 옵션에 따라 FROM 절의 서브쿼리를 외부 쿼리와 통합하는 형태의 최적화가 수행되기도 한다.
     - **FROM 절의 서브 쿼리를 간단히 제거하고 조인으로 처리할 수 있는 경우 쿼리 최적화를 진행해주자.**
         - **쿼리 튜닝 시 실행 계획 확인 시 가장 먼저 select_type이 DERIVED 유뮤를 확인하자.**
         - **서브쿼리를 조인으로 풀어서 고쳐쓰는 습관을 들이면 어느 순간 조인으로 복잡한 쿼리 작성이 가능해진다.**
-3. **DEPENDENT DERIVED**
+9. **DEPENDENT DERIVED**
     - FROM 절의 서브쿼리가 외부 쿼리를 참조할 경우의 select_type이다.
     - MySQL 8.0 이전까지는 FROM 절의 서브쿼리는 외부 칼럼을 사용할 수 없었다.
     - MySQL 8.0 부터 **래터럴 조인(LATERAL JOIN) 기능이 추가되면서 FROM 절의 서브쿼리에서도 외부 칼럼을 참조**할 수 있게 되었다.
@@ -207,7 +207,7 @@ SELECT
     - 위 쿼리는 래터럴 조인의 가장 태표적인 활용 예제로, employees 테이블 레코드 1건당
       salaries 테이블의 레코드를 최근 순서대로 최대 2건까지만 가져와서 조인을 실행한다.
     - 래터럴 조인 사용에는 LATERAL 키워드가 필수로, LATERAL 키워드가 없는 서브쿼리에서 외부 칼럼을 참조하면 오류가 발생한다.
-4. **UNCACHEABLE SUBQUERY**
+10. **UNCACHEABLE SUBQUERY**
     - 하나의 쿼리 문장에 서브쿼리가 하나만 있더라도 그 서브쿼리가 한 번만 실행되는 것은 아니다.
     - 조건이 같은 서브쿼리는 재실행되지 않고 캐시 공간에서 꺼내와 사용한다.
     - 서브쿼리에 포함된 요소에 의해 캐시 자체가 불가능할 수 있는데, 이 경우 select_type이 UNCACHEABLE SUBQUERY로 표시된다.
@@ -215,9 +215,9 @@ SELECT
         - 사용자 변수가 서브쿼리에 사용된 경우
         - NOT-DETERMINISTIC 속성의 스토어드 루틴이 서브쿼리 내에 사용된 경우
         - `UUID()`나 `RAND()` 같이 결과값이 호출될 때 마다 달라지는 함수가 서브쿼리에 사용된 경우
-5. **UNCACHEABLE UNION**
+11. **UNCACHEABLE UNION**
     - 앞에서 설명한 **UNION과 UNCACHEABLE 키워드의 속성이 혼합**된 select_type을 의미한다.
-6. **MATERIALZED**
+12. **MATERIALZED**
 
    > 구체화란? 세미 조인에서 사용된 서브 쿼리를 통째로 임시 테이블로 생성한다는 의미
    >
@@ -232,11 +232,11 @@ SELECT
     WHERE e.emp_no IN (SELECT emp_no FROM salaries WHERE salary BETWEEN 100 AND 1000);
     ```
 
-   | id | select_type | table | type | key | rows | Extra |
-       | --- | --- | --- | --- | --- | --- | --- |
-   | 1 | SIMPLE | <subquery> | ALL | NULL | NULL | NULL |
-   | 1 | SIMPLE | e | eq_ref | PRIMARY | 1 | NULL |
-   | 2 | MATERIALIZED | salaries | range | ix_salary | 1 | Using where, Using index |
+| id | select_type | table | type | key | rows | Extra |
+| --- | --- | --- | --- | --- | --- | --- |
+| 1 | SIMPLE | <subquery> | ALL | NULL | NULL | NULL |
+| 1 | SIMPLE | e | eq_ref | PRIMARY | 1 | NULL |
+| 2 | MATERIALIZED | salaries | range | ix_salary | 1 | Using where, Using index |
 
 ## 10.3.3 table 칼럼
 
@@ -359,7 +359,7 @@ WHERE first_name='Jasminko'; -- // Jasminko는 상단 서브쿼리의 결과값
 
 </aside>
 
-1. **eq_ref**
+3. **eq_ref**
     - 조인에서 처음 읽은 테이블의 칼럼값을, 그 다음 읽어야 할 테이블의 PK나 유니크 키 칼럼의 검색 조건에 사용할 때를 가리켜 eq_ref 라고 한다.
     - 이때 두 번째 이후에 읽는 테이블의 type 칼럼에 eq_ref가 표시되며, 다중 칼럼으로 만들어진 PK나 유니크 인덱스라면 인덱스이 모든 칼럼이 비교 조건에 사용돼야만 eq_ref 접근 방법이 사용될 수 있다.
         - 즉, 조인에서 두 번째 이후에 읽는 테이블에서 반드시 1건만 존재한다는 보장이 있어야 사용 가능
@@ -376,11 +376,11 @@ WHERE first_name='Jasminko'; -- // Jasminko는 상단 서브쿼리의 결과값
     - dept_emp 테이블이 상단에 있기에, 먼저 읽고 동등 조건으로 employees 테이블을 검색한다.
     - employees 테이블의 emp_no는 PK기에 실행 계획의 2번째 라인은 type 칼럼이 eq_ref로 표기된다.
 
-   | id | select_type | table | type | key | key_len | rows |
-       | --- | --- | --- | --- | --- | --- | --- |
-   | 1 | SIMPLE | de | ref | PRIMARY | 16 | 165571 |
-   | 1 | SIMPLE | e | eq_ref | PRIMARY | 4 | 1 |
-2. **ref**
+| id | select_type | table | type | key | key_len | rows |
+| --- | --- | --- | --- | --- | --- | --- |
+| 1 | SIMPLE | de | ref | PRIMARY | 16 | 165571 |
+| 1 | SIMPLE | e | eq_ref | PRIMARY | 4 | 1 |
+4. **ref**
     - eq_ref와 달리 조인의 순서와 관계없이 사용되며, PK나 유니크 키의 제약 조건도 없다.
     - 인덱스의 종류와 관계없이 동등(Equal) 조건으로 검색할 때는 ref 접근 방법이 사용된다.
     - 반환되는 레코드가 반드시 1건이라는 보장은 없기에 const나 eq_ref 보단 느리다.
@@ -391,28 +391,28 @@ WHERE first_name='Jasminko'; -- // Jasminko는 상단 서브쿼리의 결과값
 
 **동등 연산자인 경우의 type 칼럼 (`=` 또는 `<=>`)**
 
-1. **const**: 조인의 순서와 관계없이 PK나 유니크 키의 모든 칼럼에 대해 동등(Equal) 조건으로 검색(반드시 1건의 레코드만 반환)
-2. **eq_ref**: 조인에서 첫 번째 읽은 테이블의 칼럼값을 이용해 두 번째 테이블을 PK나 유니크 키로 동등 조건 검색(두 번째 테이블은 반드시 1건의 레코드만 반환)
-3. **ref**: 조인의 순서와 인덱스 종류에 관계없이 동등 조건으로 검색
+| **const**: 조인의 순서와 관계없이 PK나 유니크 키의 모든 칼럼에 대해 동등(Equal) 조건으로 검색(반드시 1건의 레코드만 반환)
+| **eq_ref**: 조인에서 첫 번째 읽은 테이블의 칼럼값을 이용해 두 번째 테이블을 PK나 유니크 키로 동등 조건 검색(두 번째 테이블은 반드시 1건의 레코드만 반환)
+| **ref**: 조인의 순서와 인덱스 종류에 관계없이 동등 조건으로 검색
 </aside>
 
-1. **fulltext**
+5. **fulltext**
     - MySQL 서버의 **전문 검색(Full-text Search) 인덱스를 사용해 레코드를 읽는 접근 방법**을 의미
     - MySQL 서버에서 전문 검색 조건의 우선순위는 상당히 높은 편이며, 쿼리에서 전문 인덱스를 사용하는 조건과 일반 인덱스가 공존할 경우 const/eq_ref/ref가 아니면 전문 인덱스가 선택되어 사용된다.
-2. **ref_or_null**
+6. **ref_or_null**
     - **ref 접근 방법과 동일하지만, NULL 비교가 추가된 형태**이다.
     - 실제 업무에서는 많이 활용되지 않지만, 사용된다면 나쁘지 않은 접근 방법 정도로 기억해두자.
-3. **unique_subquery**
+7. **unique_subquery**
     - WHERE 조건절에서 사용될 수 있는 IN(subquery) 형태의 쿼리를 위한 접근 방법
     - unique_subquery 라는 이름대로 **서브쿼리에서 중복되지 않는 유니크한 값만 반환할 때 사용**한다.
-4. **index_subquery**
+8. **index_subquery**
     - IN 연산자 특성상 괄호 안에 있는 값 목록에서 중복된 값을 제거해야한다.
     - **서브쿼리 결과의 중복된 값을 인덱스를 이용해서 제거할 수 있을 때 사용되는 접근 방법**이다.
-5. **range**
+9. **range**
     - 우리가 익히 알고있는 **인덱스 레인지 스캔 형태의 접근 방법**
     - 인덱스를 하나의 값이 아닌 범위로 검색하는 경우를 의미하는데, 주로 `<`, `>`, `IS NULL`, `BETWEEN`, `IN`, `LIKE` 등의 연산자를 이용해 인덱스를 검색할 때 사용된다.
     - 일반적으로 애플리케이션의 쿼리가 가장 많이 사용하는 접근 방법인데, 소개된 type 들 중에서 상당히 우선순위가 낮음을 알 수 있지만, range 접근 방법도 상당히 빠르며 최적의 성능이 보장된다.
-6. **index_merge**
+10. **index_merge**
     - 2개 이상의 인덱스를 이용해 각각의 검색 결과를 만들어낸 후, 그 결과를 병합해서 처리하는 방식
     - 여러 인덱스를 읽어야 하기에 일반적으로 range 접근 방법보다 효율성이 떨어진다.
     - 전문 검색 인덱스 사용 쿼리에서는 index_merge가 적용되지 않는다.
@@ -425,15 +425,15 @@ WHERE first_name='Jasminko'; -- // Jasminko는 상단 서브쿼리의 결과값
     	OR first_name='Smith';
     ```
 
-   | id | type | key | key_len | Extra |
-       | --- | --- | --- | --- | --- |
-   | 1 | index_merge | PRIMARY, ix_firstname | 4,58 | Using union(PRIMARY, ix_firstname); Using where |
+| id | type | key | key_len | Extra |
+| --- | --- | --- | --- | --- |
+| 1 | index_merge | PRIMARY, ix_firstname | 4,58 | Using union(PRIMARY, ix_firstname); Using where |
     - 위 쿼리는 두 개의 조건이 OR 연산자로 연결된 쿼리이다.
         - OR로 연결된 두 개 조건이 모두 각각 다른 인덱스를 최적으로 사용할 수 있는 조건이다.
         - 그래서 `BETWEEN 10001 AND 11000` 조건은 employees 테이블의 PK를 통해 조회한다.
         - `first_name='Smith'` 조건은 ix_firstname 인덱스를 이용해 조회한다.
         - 이후 두 결과를 병합하는 형태로 처리하는 실행 계획을 만들어 낸다.
-7. **index**
+11. **index**
     - index 접근 방법은 많은 사람이 자주 오해하는 접근 방식으로, 이름만 보고 효율적으로 인덱스를 사용한다고 생각할 수 있다.
     - 하지만 **index 접근 방법은 인덱스를 처음부터 끝까지 읽는 인덱스 풀 스캔을 의미**한다.
         - range 접근 방법 처럼 효율적으로 인덱스의 필요한 부분만 읽는 방식이 아니다.
@@ -444,7 +444,7 @@ WHERE first_name='Jasminko'; -- // Jasminko는 상단 서브쿼리의 결과값
         3. 인덱스를 이용해 정렬이나 그루핑 작업이 가능한 경우(별도의 정렬 작업을 피할 수 있을 때)
     - `SELECT * FROM departments ORDER BY dept_name DESC LIMIT 10;`
         - 위 쿼리는 인덱스를 처음부터 끝까지 읽는 index 접근 방법이지만, LIMIT 조건으로 인해 상당히 효율적이다.
-8. **ALL**
+12. **ALL**
     - 우리가 흔히 알고 있는 **풀 테이블 스캔을 의미하는 접근 방법**이다.
     - 테이블을 처음부터 끝까지 전부 읽어서 불필요한 레코드를 제거하고 반환한다.
     - 지금까지의 접근 방법으로는 처리할 수 없을 때 가장 마지막에 선택하는 가장 비효율적인 방법이다.
